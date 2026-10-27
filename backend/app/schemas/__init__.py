@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
@@ -14,15 +14,14 @@ class UserCreate(BaseModel):
     role: Optional[str] = "user"
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     email: str
     name: str
     role: str
     is_active: bool
     avatar_initials: Optional[str] = None
-
-    class Config:
-        from_attributes = True
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -32,6 +31,8 @@ class TokenResponse(BaseModel):
 
 # --- Connected Account Schemas ---
 class AccountResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     provider: str
     name: str
@@ -42,9 +43,6 @@ class AccountResponse(BaseModel):
     quota_total_gb: float
     quota_used_gb: float
     token_expires: Optional[str] = None
-
-    class Config:
-        from_attributes = True
 
 class AccountConnectRequest(BaseModel):
     provider: str
@@ -62,6 +60,8 @@ class AgentHeartbeatRequest(BaseModel):
     throughput_mbps: float = 0.0
 
 class AgentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     device_name: str
     status: str
@@ -71,9 +71,6 @@ class AgentResponse(BaseModel):
     ip_address: str
     storage_path: str
     mtls_fingerprint: Optional[str] = None
-
-    class Config:
-        from_attributes = True
 
 # --- Transfer Schemas ---
 class TransferCreateRequest(BaseModel):
@@ -94,6 +91,8 @@ class TransferActionRequest(BaseModel):
     action: str  # pause, resume, cancel, retry
 
 class TransferResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     name: str
     source_account_id: str
@@ -113,11 +112,10 @@ class TransferResponse(BaseModel):
     started_at: datetime
     elapsed_str: Optional[str] = "Just now"
 
-    class Config:
-        from_attributes = True
-
 # --- Audit Schemas ---
 class AuditLogResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     timestamp: datetime
     user: str
@@ -127,6 +125,3 @@ class AuditLogResponse(BaseModel):
     outcome: str
     request_id: str
     ip: str
-
-    class Config:
-        from_attributes = True

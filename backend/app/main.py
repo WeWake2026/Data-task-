@@ -144,6 +144,24 @@ def legacy_get_transfers(db: Session = Depends(get_db)):
         ]
     }
 
+@app.post("/api/transfers/{transfer_id}/action")
+async def legacy_transfer_action(transfer_id: str, payload: dict, db: Session = Depends(get_db)):
+    job = db.query(TransferJob).filter(TransferJob.id == transfer_id).first()
+    if not job:
+        return JSONResponse(status_code=404, content={"detail": "Transfer not found"})
+    action = payload.get("action", "").lower()
+    if action == "pause":
+        job.status = "Paused"
+        job.speed_mbps = 0.0
+    elif action == "resume":
+        job.status = "Running"
+        job.speed_mbps = 185.0
+    elif action == "cancel":
+        job.status = "Cancelled"
+        job.speed_mbps = 0.0
+    db.commit()
+    return {"status": "success", "transfer": {"id": job.id, "status": job.status}}
+
 @app.get("/api/accounts")
 def legacy_get_accounts(db: Session = Depends(get_db)):
     accounts = db.query(ConnectedAccount).all()
