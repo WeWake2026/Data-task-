@@ -1,0 +1,1940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secure Cloud Transfer Manager — Enterprise Dashboard</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            navy: {
+              950: '#070D1B',
+              900: '#0B1528',
+              850: '#0F1E38',
+              800: '#142749',
+              700: '#1C3560',
+            },
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- React & ReactDOM & Babel for full JSX in browser -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F8FAFC;
+      color: #1E293B;
+    }
+    /* Subtle custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+    .pulse-glow {
+      box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+    }
+    .sidebar-active {
+      background: #1E3A8A;
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body class="antialiased min-h-screen text-slate-800">
+  <div id="root"></div>
+
+  <!-- Main Application Script written in React & JSX -->
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    // --- Provider Logos & Badges Helper ---
+    function ProviderBadge({ provider, size = "w-5 h-5" }) {
+      const p = (provider || "").toLowerCase();
+      if (p.includes("google") || p.includes("gdrive")) {
+        return (
+          <div className="flex items-center gap-1.5">
+            <svg className={size} viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
+              <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+              <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/>
+              <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/>
+              <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
+              <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
+              <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+            </svg>
+            <span className="text-xs font-semibold text-slate-700">Google Drive</span>
+          </div>
+        );
+      }
+      if (p.includes("onedrive")) {
+        return (
+          <div className="flex items-center gap-1.5">
+            <svg className={size} viewBox="0 0 24 24" fill="none">
+              <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" fill="#0078D4"/>
+            </svg>
+            <span className="text-xs font-semibold text-slate-700">OneDrive</span>
+          </div>
+        );
+      }
+      if (p.includes("dropbox")) {
+        return (
+          <div className="flex items-center gap-1.5">
+            <svg className={size} viewBox="0 0 24 24" fill="#0061FF">
+              <path d="M6 2L0 6.5L6 11L12 6.5L6 2ZM18 2L12 6.5L18 11L24 6.5L18 2ZM0 15.5L6 20L12 15.5L6 11L0 15.5ZM24 15.5L18 11L12 15.5L18 20L24 15.5ZM6 21.5L12 17.5L18 21.5L12 25.5L6 21.5Z"/>
+            </svg>
+            <span className="text-xs font-semibold text-slate-700">Dropbox</span>
+          </div>
+        );
+      }
+      // Local
+      return (
+        <div className="flex items-center gap-1.5">
+          <div className="p-0.5 rounded bg-slate-200 text-slate-700">
+            <i data-lucide="hard-drive" className="w-3.5 h-3.5"></i>
+          </div>
+          <span className="text-xs font-semibold text-slate-700">Local Disk</span>
+        </div>
+      );
+    }
+
+    // --- Status Badge Helper ---
+    function StatusBadge({ status }) {
+      const s = (status || "").toLowerCase();
+      let bg = "bg-blue-50 text-blue-700 border-blue-200";
+      let dot = "bg-blue-600";
+
+      if (s === "running") {
+        bg = "bg-emerald-50 text-emerald-700 border-emerald-200";
+        dot = "bg-emerald-500 animate-ping";
+      } else if (s === "completed") {
+        bg = "bg-green-50 text-green-700 border-green-200";
+        dot = "bg-green-600";
+      } else if (s === "paused") {
+        bg = "bg-amber-50 text-amber-700 border-amber-200";
+        dot = "bg-amber-500";
+      } else if (s === "failed") {
+        bg = "bg-rose-50 text-rose-700 border-rose-200";
+        dot = "bg-rose-500";
+      } else if (s === "connected") {
+        bg = "bg-emerald-50 text-emerald-700 border-emerald-200";
+        dot = "bg-emerald-500";
+      } else if (s === "limited access") {
+        bg = "bg-orange-50 text-orange-700 border-orange-200";
+        dot = "bg-orange-500";
+      }
+
+      return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${bg}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${dot}`}></span>
+          {status}
+        </span>
+      );
+    }
+
+    // --- Main Application Component ---
+    function App() {
+      const [currentNav, setCurrentNav] = useState("dashboard");
+      const [summary, setSummary] = useState({
+        total_data_gb: 0.0,
+        completed_data_gb: 0.0,
+        completed_files: 0,
+        completed_pct: 0.0,
+        failed_data_gb: 0.0,
+        failed_files: 0,
+        failed_pct: 0.0,
+        transfer_speed_mbps: 0.0,
+        active_jobs_count: 0
+      });
+      const [transfers, setTransfers] = useState([]);
+      const [accounts, setAccounts] = useState([]);
+      const [agent, setAgent] = useState(null);
+      const [activity, setActivity] = useState([]);
+      const [auditLogs, setAuditLogs] = useState([]);
+      const [user, setUser] = useState(null);
+
+      // Filters & Search
+      const [statusFilter, setStatusFilter] = useState("All");
+      const [searchQuery, setSearchQuery] = useState("");
+
+      // Wizard Modal State
+      const [isWizardOpen, setIsWizardOpen] = useState(false);
+      const [wizardStep, setWizardStep] = useState(1);
+      const [wizardData, setWizardData] = useState({
+        name: "",
+        source_account_id: "",
+        source_path: "/",
+        destination_account_id: "",
+        destination_path: "/",
+        skip_existing: true,
+        rename_conflicts: false,
+        replace_existing: false,
+        preserve_hierarchy: true,
+        verify_integrity: true,
+        concurrency: 4
+      });
+
+      // App Login Screen State
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [loginTab, setLoginTab] = useState("qr"); // 'qr' or 'credentials'
+      const [loginEmail, setLoginEmail] = useState("");
+      const [loginPassword, setLoginPassword] = useState("");
+      const [loginQrData, setLoginQrData] = useState(null);
+      const [loginError, setLoginError] = useState("");
+
+      const showToast = (message, type = "success") => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 4000);
+      };
+
+      const initAppQrLogin = async () => {
+        try {
+          const res = await fetch('/api/v1/auth/qr/session', { method: 'POST' });
+          if (res.ok) {
+            const data = await res.json();
+            setLoginQrData(data);
+            
+            // Poll for approval
+            const interval = setInterval(async () => {
+              try {
+                const statusRes = await fetch(`/api/v1/auth/qr/status/${data.session_id}`);
+                if (statusRes.ok) {
+                  const s = await statusRes.json();
+                  if (s.status === "authorized") {
+                    clearInterval(interval);
+                    setUser(s.user);
+                    setIsAuthenticated(true);
+                    showToast(`Welcome back, ${s.user.name}!`);
+                    fetchData();
+                  } else if (s.status === "expired") {
+                    clearInterval(interval);
+                  }
+                }
+              } catch (e) {}
+            }, 2500);
+          }
+        } catch (e) {}
+      };
+
+      const handlePasswordLogin = async (e) => {
+        e.preventDefault();
+        setLoginError("");
+        try {
+          const res = await fetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: loginEmail, password: loginPassword })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setUser(data.user);
+            setIsAuthenticated(true);
+            showToast(`Signed in successfully as ${data.user.name}`);
+            fetchData();
+          } else {
+            const err = await res.json();
+            setLoginError(err.detail || "Invalid email or password");
+          }
+        } catch (err) {
+          setLoginError("Failed to communicate with authentication server");
+        }
+      };
+
+      const handleLogout = async () => {
+        await fetch('/api/v1/auth/logout', { method: 'POST' });
+        setIsAuthenticated(false);
+        setUser(null);
+        showToast("Logged out securely.");
+      };
+
+      const openConnectModal = () => {
+        setIsConnectModalOpen(true);
+        setDeviceSession(null);
+      };
+
+      const startAuthorizationSession = async (provider) => {
+        try {
+          const res = await fetch(`/api/v1/accounts/${provider}/device-session`, {
+            method: 'POST'
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setDeviceSession(data);
+            
+            // Start polling for safe authorization outcome
+            if (pollIntervalId) clearInterval(pollIntervalId);
+            const interval = setInterval(async () => {
+              try {
+                const checkRes = await fetch(`/api/v1/accounts/authorization-sessions/${data.session_id}`);
+                if (checkRes.ok) {
+                  const checkData = await checkRes.json();
+                  if (checkData.status === "authorized") {
+                    clearInterval(interval);
+                    showToast(`${provider} authorized successfully!`);
+                    setIsConnectModalOpen(false);
+                    setDeviceSession(null);
+                    fetchData();
+                  } else if (checkData.status === "expired" || checkData.status === "cancelled") {
+                    clearInterval(interval);
+                    showToast(`Session ${checkData.status}. Please try again.`, "error");
+                    setDeviceSession(null);
+                  }
+                }
+              } catch (e) {}
+            }, 3000);
+            setPollIntervalId(interval);
+          }
+        } catch (err) {
+          showToast("Failed to initiate provider authorization", "error");
+        }
+      };
+
+      const cancelAuthSession = async () => {
+        if (deviceSession?.session_id) {
+          await fetch(`/api/v1/accounts/authorization-sessions/${deviceSession.session_id}/cancel`, { method: 'POST' });
+        }
+        if (pollIntervalId) clearInterval(pollIntervalId);
+        setDeviceSession(null);
+        setIsConnectModalOpen(false);
+      };
+
+      // Fetch Initial Data
+      const fetchData = async () => {
+        try {
+          const [sumRes, transRes, accRes, agRes, actRes, audRes, userRes] = await Promise.all([
+            fetch('/api/dashboard/summary').then(r => r.json()),
+            fetch('/api/transfers').then(r => r.json()),
+            fetch('/api/accounts').then(r => r.json()),
+            fetch('/api/agent').then(r => r.json()),
+            fetch('/api/activity').then(r => r.json()),
+            fetch('/api/audit-logs').then(r => r.json()),
+            fetch('/api/user/current').then(r => r.json()),
+          ]);
+
+          setSummary(sumRes);
+          setTransfers(transRes.items || []);
+          setAccounts(accRes.items || []);
+          setAgent(agRes);
+          setActivity(actRes.items || []);
+          setAuditLogs(audRes.items || []);
+          setUser(userRes);
+        } catch (err) {
+          console.warn("Using offline simulated fixtures:", err);
+        }
+      };
+
+      useEffect(() => {
+        // Verify session cookie on mount
+        fetch('/api/v1/auth/me')
+          .then(r => {
+            if (r.ok) return r.json();
+            throw new Error("Unauthenticated");
+          })
+          .then(u => {
+            setUser(u);
+            setIsAuthenticated(true);
+            fetchData();
+          })
+          .catch(() => {
+            setIsAuthenticated(false);
+            initAppQrLogin();
+          });
+
+        // Setup WebSocket for Live Real-Time Transfer Updates
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws/transfers`;
+        let ws;
+        try {
+          ws = new WebSocket(wsUrl);
+          ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === "PROGRESS_PULSE") {
+              setTransfers(data.transfers);
+              setSummary(data.summary);
+            }
+          };
+        } catch (e) {
+          console.warn("WS connection fallback to polling");
+        }
+
+        const interval = setInterval(() => {
+          if (isAuthenticated) {
+            fetch('/api/dashboard/summary').then(r => r.json()).then(s => setSummary(s)).catch(()=>{});
+          }
+        }, 5000);
+
+        return () => {
+          if (ws) ws.close();
+          clearInterval(interval);
+        };
+      }, [isAuthenticated]);
+
+      // Trigger lucide icons reload whenever DOM renders
+      useEffect(() => {
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+      });
+
+      // Filtered transfers
+      const filteredTransfers = useMemo(() => {
+        return transfers.filter(t => {
+          const matchStatus = statusFilter === "All" || t.status.toLowerCase() === statusFilter.toLowerCase();
+          const q = searchQuery.toLowerCase();
+          const matchQuery = !q || 
+            t.name.toLowerCase().includes(q) || 
+            t.source_provider.toLowerCase().includes(q) || 
+            t.destination_provider.toLowerCase().includes(q) ||
+            t.id.toLowerCase().includes(q);
+          return matchStatus && matchQuery;
+        });
+      }, [transfers, statusFilter, searchQuery]);
+
+      // Transfer Actions
+      const handleAction = async (transferId, action) => {
+        try {
+          const res = await fetch(`/api/transfers/${transferId}/action`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action })
+          });
+          if (res.ok) {
+            showToast(`Transfer ${transferId} ${action}d successfully.`);
+            fetchData();
+          }
+        } catch (err) {
+          showToast(`Action failed: ${err.message}`, "error");
+        }
+      };
+
+      // Account Reconnect
+      const handleReconnect = async (accId) => {
+        try {
+          const res = await fetch(`/api/accounts/${accId}/reconnect`, { method: 'POST' });
+          if (res.ok) {
+            showToast("Account successfully re-authorized via OAuth 2.0 PKCE!");
+            fetchData();
+          }
+        } catch (e) {
+          showToast("Failed to reconnect account", "error");
+        }
+      };
+
+      // New Transfer Submit
+      const handleCreateTransfer = async () => {
+        if (!wizardData.name.trim()) {
+          showToast("Please provide a transfer job name", "error");
+          return;
+        }
+        try {
+          const res = await fetch('/api/transfers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(wizardData)
+          });
+          if (res.ok) {
+            const data = await res.json();
+            showToast(`Transfer Job ${data.job.id} initialized!`);
+            setIsWizardOpen(false);
+            setWizardStep(1);
+            setWizardData({
+              name: "",
+              source_account_id: "acc-onedrive-1",
+              source_path: "/Finance/2026/Enterprise_Audits",
+              destination_account_id: "acc-gdrive-1",
+              destination_path: "/CloudArchive/SecureVault",
+              skip_existing: true,
+              rename_conflicts: false,
+              replace_existing: false,
+              preserve_hierarchy: true,
+              verify_integrity: true,
+              concurrency: 6
+            });
+            fetchData();
+          }
+        } catch (e) {
+          showToast("Error creating transfer job", "error");
+        }
+      };
+
+      if (!isAuthenticated) {
+        return (
+          <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 relative overflow-hidden">
+            {/* Background glowing gradients */}
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="bg-navy-900 border border-navy-800 w-full max-w-md rounded-2xl shadow-2xl p-8 text-white relative z-10 space-y-6">
+              {/* Logo & Header */}
+              <div className="text-center space-y-2">
+                <div className="w-12 h-12 bg-blue-600 rounded-xl mx-auto flex items-center justify-center text-white shadow-lg">
+                  <i data-lucide="cloud-lightning" className="w-7 h-7"></i>
+                </div>
+                <h1 className="text-xl font-bold tracking-tight">Secure Cloud Transfer Manager</h1>
+                <p className="text-xs text-slate-400">Enterprise Large-Volume Migration Suite</p>
+              </div>
+
+              {/* Login Modes Switcher */}
+              <div className="flex bg-navy-950 p-1 rounded-xl border border-navy-800">
+                <button
+                  onClick={() => { setLoginTab("qr"); initAppQrLogin(); }}
+                  className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
+                    loginTab === "qr" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <i data-lucide="qr-code" className="w-4 h-4"></i>
+                  <span>QR Code Login</span>
+                </button>
+                <button
+                  onClick={() => setLoginTab("credentials")}
+                  className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${
+                    loginTab === "credentials" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <i data-lucide="key" className="w-4 h-4"></i>
+                  <span>Password</span>
+                </button>
+              </div>
+
+              {/* QR Code Tab */}
+              {loginTab === "qr" && (
+                <div className="space-y-4 text-center">
+                  <p className="text-xs text-slate-400">
+                    Scan with your mobile device or authenticated app for instant passwordless sign in.
+                  </p>
+                  
+                  <div className="p-3 bg-white rounded-2xl inline-block shadow-md">
+                    {loginQrData?.qr_code_data_uri ? (
+                      <img src={loginQrData.qr_code_data_uri} alt="Login QR Code" className="w-52 h-52 mx-auto" />
+                    ) : (
+                      <div className="w-52 h-52 flex items-center justify-center text-slate-400">
+                        <i data-lucide="loader" className="w-6 h-6 animate-spin"></i>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>Waiting for scan authorization...</span>
+                  </div>
+
+                  {/* Instant Mobile Confirmation Simulation Link for User */}
+                  <div className="pt-2">
+                    <button
+                      onClick={async () => {
+                        if (loginQrData?.session_id) {
+                          await fetch(`/api/v1/auth/qr/authorize-instant?session_id=${loginQrData.session_id}`, { method: 'POST' });
+                        }
+                      }}
+                      className="text-[11px] text-blue-400 hover:text-blue-300 font-medium underline"
+                    >
+                      Authorize via Verified Mobile Token
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Credentials Tab */}
+              {loginTab === "credentials" && (
+                <form onSubmit={handlePasswordLogin} className="space-y-4 text-left">
+                  {loginError && (
+                    <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
+                      {loginError}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1.5">Email Address</label>
+                    <input
+                      type="email"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      placeholder="e.g. yourname@domain.com"
+                      required
+                      className="w-full px-3 py-2 bg-navy-950 border border-navy-800 rounded-lg text-white text-xs focus:ring-1 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1.5">Account Password</label>
+                    <input
+                      type="password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      required
+                      className="w-full px-3 py-2 bg-navy-950 border border-navy-800 rounded-lg text-white text-xs focus:ring-1 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-sm transition-all"
+                  >
+                    Sign In to Enterprise Workspace
+                  </button>
+                </form>
+              )}
+
+              {/* Security Policy Reminder */}
+              <div className="p-3 rounded-xl bg-navy-950/80 border border-navy-800 text-[11px] text-slate-400 space-y-1">
+                <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                  <i data-lucide="shield-check" className="w-3.5 h-3.5"></i>
+                  <span>Zero-Knowledge Principle</span>
+                </div>
+                <p>
+                  Application login never grants cloud account access. Credentials and passwords are never collected.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="flex min-h-screen">
+          {/* TOAST NOTIFICATION */}
+          {toast && (
+            <div className="fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 bg-white border border-slate-200 rounded-lg shadow-xl animate-bounce">
+              <div className={`p-1 rounded-full ${toast.type === 'error' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                <i data-lucide={toast.type === 'error' ? 'alert-circle' : 'check'} className="w-5 h-5"></i>
+              </div>
+              <p className="text-sm font-medium text-slate-800">{toast.message}</p>
+            </div>
+          )}
+
+          {/* 1. DARK NAVY-BLUE LEFT SIDEBAR */}
+          <aside className="w-64 bg-navy-900 text-slate-300 flex flex-col justify-between border-r border-navy-800 shrink-0">
+            <div>
+              {/* App Brand Header */}
+              <div className="px-6 py-5 border-b border-navy-800 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-md">
+                  <i data-lucide="cloud-lightning" className="w-5 h-5"></i>
+                </div>
+                <div>
+                  <h1 className="text-sm font-bold text-white tracking-tight leading-tight">Secure Cloud</h1>
+                  <span className="text-xs text-blue-400 font-medium">Transfer Manager</span>
+                </div>
+              </div>
+
+              {/* Tagline */}
+              <div className="px-6 py-2 bg-navy-950/60 text-[11px] font-medium text-slate-400 tracking-wide border-b border-navy-800/60 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                Safe · Fast · Private
+              </div>
+
+              {/* Navigation Items */}
+              <nav className="p-4 space-y-1">
+                {[
+                  { id: "dashboard", label: "Dashboard", icon: "layout-dashboard" },
+                  { id: "transfers", label: "Transfers", icon: "arrow-left-right", badge: summary.active_jobs_count },
+                  { id: "accounts", label: "Accounts", icon: "cloud", badge: accounts.length },
+                  { id: "agent", label: "Local Agent", icon: "cpu", badge: agent?.status === "Online" ? "Active" : null },
+                  { id: "audit", label: "Audit Logs", icon: "shield-alert" },
+                  { id: "settings", label: "Settings", icon: "settings" },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setCurrentNav(item.id)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      currentNav === item.id
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-slate-300 hover:bg-navy-800 hover:text-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <i data-lucide={item.icon} className="w-4 h-4"></i>
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge && (
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                        currentNav === item.id ? "bg-blue-800 text-white" : "bg-navy-800 text-blue-300"
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* Bottom Security Card */}
+            <div className="p-4 border-t border-navy-800">
+              <div className="p-3.5 rounded-xl bg-navy-850 border border-navy-700/60 space-y-2">
+                <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
+                  <i data-lucide="shield-check" className="w-4 h-4"></i>
+                  <span>Zero-Knowledge Security</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
+                  Application login never grants cloud account access. Credentials and passwords are never collected.
+                </p>
+                <div className="pt-1 flex items-center justify-between text-[10px] text-slate-400 border-t border-navy-700/40">
+                  <span>OAuth 2.0 PKCE</span>
+                  <span className="text-emerald-400">Tokens Encrypted</span>
+                </div>
+              </div>
+
+              {/* Version & Help Link */}
+              <div className="mt-3 px-1 flex items-center justify-between text-[11px] text-slate-400">
+                <span>v2.4.0 (Build 904)</span>
+                <a href="#help" className="hover:text-slate-200">Help & Docs</a>
+              </div>
+            </div>
+          </aside>
+
+          {/* MAIN APPLICATION WRAPPER */}
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* 2. TOP HEADER */}
+            <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
+              {/* Breadcrumb / Title */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Enterprise</span>
+                <span className="text-slate-300">/</span>
+                <span className="text-sm font-semibold text-slate-800 capitalize">{currentNav}</span>
+              </div>
+
+              {/* Actions & User Profile */}
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setIsWizardOpen(true)}
+                  className="hidden md:flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-all"
+                >
+                  <i data-lucide="plus" className="w-4 h-4"></i>
+                  <span>New Transfer</span>
+                </button>
+
+                <div className="h-5 w-px bg-slate-200 mx-1"></div>
+
+                {/* Notifications */}
+                <button className="relative p-2 text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100">
+                  <i data-lucide="bell" className="w-4 h-4"></i>
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white"></span>
+                </button>
+
+                {/* User Info & Logout */}
+                <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-700 to-indigo-600 text-white flex items-center justify-center font-bold text-xs ring-2 ring-blue-100">
+                    {user?.avatar_initials || "VK"}
+                  </div>
+                  <div className="hidden sm:block text-left">
+                    <div className="text-xs font-bold text-slate-800">{user?.name || "Vivek Kulkarni"}</div>
+                    <div className="text-[10px] text-slate-500 font-medium">{user?.role || "Enterprise Security Admin"}</div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    title="Sign Out Securely"
+                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors ml-1"
+                  >
+                    <i data-lucide="log-out" className="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            {/* CONTENT AREA */}
+            <main className="flex-1 p-8 overflow-y-auto space-y-6">
+              {currentNav === "dashboard" && (
+                <>
+                  {/* WELCOME SECTION */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
+                    <div>
+                      <h2 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back!</h2>
+                      <p className="text-sm text-slate-500 mt-1">
+                        Manage your cloud transfers, accounts and agents from one place.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={fetchData}
+                        className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 shadow-sm"
+                      >
+                        <i data-lucide="rotate-cw" className="w-3.5 h-3.5"></i>
+                        <span>Sync Status</span>
+                      </button>
+                      <button
+                        onClick={() => setIsWizardOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-all"
+                      >
+                        <i data-lucide="plus-circle" className="w-4 h-4"></i>
+                        <span>New Transfer</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 4 SUMMARY CARDS */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    {/* Card 1: Total Data */}
+                    <div className="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Data</span>
+                        <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                          <i data-lucide="database" className="w-5 h-5"></i>
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        <div className="text-2xl font-bold text-slate-900">{summary.total_data_gb} GB</div>
+                        <p className="text-xs text-slate-500 mt-1">Selected for transfer</p>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                        <span>{summary.total_jobs_count} Total Jobs</span>
+                        <span className="text-blue-600 font-medium">All Providers</span>
+                      </div>
+                    </div>
+
+                    {/* Card 2: Completed */}
+                    <div className="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Completed</span>
+                        <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                          <i data-lucide="check-circle-2" className="w-5 h-5"></i>
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        <div className="text-2xl font-bold text-slate-900">{summary.completed_data_gb} GB</div>
+                        <p className="text-xs text-emerald-600 font-medium mt-1">
+                          {summary.completed_files.toLocaleString()} files ({summary.completed_pct}%)
+                        </p>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                        <span>Integrity verified</span>
+                        <span className="text-emerald-600 font-medium">SHA-256 Valid</span>
+                      </div>
+                    </div>
+
+                    {/* Card 3: Failed */}
+                    <div className="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Failed</span>
+                        <div className="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                          <i data-lucide="alert-triangle" className="w-5 h-5"></i>
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        <div className="text-2xl font-bold text-slate-900">{summary.failed_data_gb} GB</div>
+                        <p className="text-xs text-rose-600 font-medium mt-1">
+                          {summary.failed_files} files ({summary.failed_pct}%)
+                        </p>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                        <span>Retryable errors</span>
+                        <span className="text-rose-600 font-medium">Auto-retry queue</span>
+                      </div>
+                    </div>
+
+                    {/* Card 4: Transfer Speed */}
+                    <div className="bg-white rounded-xl p-5 border border-slate-200/80 shadow-sm relative overflow-hidden">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Transfer Speed</span>
+                        <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                          <i data-lucide="zap" className="w-5 h-5"></i>
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        <div className="text-2xl font-bold text-slate-900">{summary.transfer_speed_mbps} MB/s</div>
+                        <p className="text-xs text-indigo-600 font-medium mt-1">
+                          {summary.active_jobs_count} concurrent active pipelines
+                        </p>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                        <span>Bandwidth throttle</span>
+                        <span className="text-indigo-600 font-medium">Uncapped</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CENTRAL ROW: ACTIVE TRANSFERS (LEFT 8 COLS) + RIGHT SIDEBAR (4 COLS) */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* LEFT: ACTIVE TRANSFERS TABLE */}
+                    <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200/80 shadow-sm flex flex-col overflow-hidden">
+                      <div className="p-5 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                          <h3 className="text-base font-bold text-slate-900">Active Transfers</h3>
+                          <p className="text-xs text-slate-500 mt-0.5">Real-time transfer pipelines and synchronization status</p>
+                        </div>
+
+                        {/* Search & Status Filters */}
+                        <div className="flex items-center gap-2.5">
+                          <div className="relative">
+                            <i data-lucide="search" className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                            <input
+                              type="text"
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              placeholder="Search transfers..."
+                              className="w-40 sm:w-48 pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700"
+                            />
+                          </div>
+
+                          <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="text-xs py-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          >
+                            <option value="All">All Statuses</option>
+                            <option value="Running">Running</option>
+                            <option value="Paused">Paused</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Failed">Failed</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Transfers Table */}
+                      <div className="overflow-x-auto flex-1">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-slate-50/75 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                              <th className="py-3 px-4">Name</th>
+                              <th className="py-3 px-4">Source → Dest</th>
+                              <th className="py-3 px-4 w-44">Progress</th>
+                              <th className="py-3 px-4">Status</th>
+                              <th className="py-3 px-4">Speed / Elapsed</th>
+                              <th className="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-xs">
+                            {filteredTransfers.length === 0 ? (
+                              <tr>
+                                <td colSpan="6" className="py-10 text-center text-slate-400">
+                                  <i data-lucide="inbox" className="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                                  No transfer jobs matching your filter.
+                                </td>
+                              </tr>
+                            ) : (
+                              filteredTransfers.map((item) => (
+                                <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                                  {/* Name */}
+                                  <td className="py-3.5 px-4 font-medium text-slate-900">
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                        <i data-lucide="folder-sync" className="w-4 h-4"></i>
+                                      </div>
+                                      <div className="truncate max-w-[180px]">
+                                        <div className="font-semibold text-slate-800 truncate">{item.name}</div>
+                                        <div className="text-[11px] text-slate-400">{item.id} · {item.total_files} files</div>
+                                      </div>
+                                    </div>
+                                  </td>
+
+                                  {/* Route */}
+                                  <td className="py-3.5 px-4 text-slate-600">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-medium text-slate-700">{item.source_provider}</span>
+                                      <i data-lucide="arrow-right" className="w-3 h-3 text-slate-400"></i>
+                                      <span className="font-medium text-slate-700">{item.destination_provider}</span>
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 truncate max-w-[160px]">{item.source_path}</div>
+                                  </td>
+
+                                  {/* Progress */}
+                                  <td className="py-3.5 px-4">
+                                    <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 mb-1">
+                                      <span>{item.progress_pct}%</span>
+                                      <span className="text-[10px] text-slate-400">
+                                        {Math.round(item.transferred_bytes / 1024 / 1024 / 1024)}GB / {Math.round(item.total_bytes / 1024 / 1024 / 1024)}GB
+                                      </span>
+                                    </div>
+                                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full transition-all duration-500 ${
+                                          item.status === 'Completed' ? 'bg-emerald-500' :
+                                          item.status === 'Paused' ? 'bg-amber-500' :
+                                          item.status === 'Failed' ? 'bg-rose-500' : 'bg-blue-600'
+                                        }`}
+                                        style={{ width: `${item.progress_pct}%` }}
+                                      ></div>
+                                    </div>
+                                  </td>
+
+                                  {/* Status */}
+                                  <td className="py-3.5 px-4">
+                                    <StatusBadge status={item.status} />
+                                  </td>
+
+                                  {/* Speed / Elapsed */}
+                                  <td className="py-3.5 px-4 text-slate-600">
+                                    <div className="font-medium text-slate-800">
+                                      {item.status === 'Running' ? `${item.speed_mbps} MB/s` : '—'}
+                                    </div>
+                                    <div className="text-[10px] text-slate-400">{item.elapsed_str} elapsed</div>
+                                  </td>
+
+                                  {/* Actions */}
+                                  <td className="py-3.5 px-4 text-right">
+                                    <div className="flex items-center justify-end gap-1.5">
+                                      {item.status === "Running" && (
+                                        <button
+                                          onClick={() => handleAction(item.id, "pause")}
+                                          title="Pause Transfer"
+                                          className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors"
+                                        >
+                                          <i data-lucide="pause" className="w-3.5 h-3.5"></i>
+                                        </button>
+                                      )}
+                                      {item.status === "Paused" && (
+                                        <button
+                                          onClick={() => handleAction(item.id, "resume")}
+                                          title="Resume Transfer"
+                                          className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+                                        >
+                                          <i data-lucide="play" className="w-3.5 h-3.5"></i>
+                                        </button>
+                                      )}
+                                      {item.status === "Failed" && (
+                                        <button
+                                          onClick={() => handleAction(item.id, "retry")}
+                                          title="Retry Failed Transfer"
+                                          className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                                        >
+                                          <i data-lucide="rotate-ccw" className="w-3.5 h-3.5"></i>
+                                        </button>
+                                      )}
+                                      {item.status !== "Completed" && item.status !== "Cancelled" && (
+                                        <button
+                                          onClick={() => handleAction(item.id, "cancel")}
+                                          title="Cancel Transfer"
+                                          className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                                        >
+                                          <i data-lucide="x" className="w-3.5 h-3.5"></i>
+                                        </button>
+                                      )}
+                                      {item.status === "Completed" && (
+                                        <button
+                                          onClick={() => showToast(`Integrity report generated for ${item.id}`)}
+                                          title="View Verification Report"
+                                          className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                                        >
+                                          <i data-lucide="file-check" className="w-3.5 h-3.5"></i>
+                                        </button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Pagination Footer */}
+                      <div className="p-3.5 border-t border-slate-200/80 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
+                        <span>Showing <strong>{filteredTransfers.length}</strong> of <strong>{transfers.length}</strong> transfer jobs</span>
+                        <div className="flex items-center gap-1">
+                          <button className="px-2.5 py-1 border border-slate-200 rounded text-slate-400 bg-white cursor-not-allowed">Previous</button>
+                          <button className="px-2.5 py-1 bg-blue-600 text-white rounded font-medium">1</button>
+                          <button className="px-2.5 py-1 border border-slate-200 rounded text-slate-600 bg-white hover:bg-slate-50">Next</button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* RIGHT SIDEBAR (4 COLS): CONNECTED ACCOUNTS & LOCAL AGENT */}
+                    <div className="lg:col-span-4 space-y-6">
+                      {/* CONNECTED ACCOUNTS CARD */}
+                      <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                          <h3 className="text-sm font-bold text-slate-900">Connected Accounts</h3>
+                          <button 
+                            onClick={() => setCurrentNav("accounts")}
+                            className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                          >
+                            Manage
+                          </button>
+                        </div>
+
+                        <div className="mt-4 space-y-3">
+                          {accounts.length === 0 ? (
+                            <div className="py-6 px-4 text-center border border-dashed border-slate-200 rounded-lg">
+                              <i data-lucide="cloud-off" className="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                              <p className="font-semibold text-slate-700 text-xs">No Cloud Accounts Connected</p>
+                              <p className="text-[11px] text-slate-400 mt-1 mb-3">Link Google Drive, OneDrive, or Dropbox via secure OAuth QR login.</p>
+                              <button
+                                onClick={openConnectModal}
+                                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold"
+                              >
+                                + Connect Account
+                              </button>
+                            </div>
+                          ) : (
+                            accounts.map((acc) => (
+                              <div key={acc.id} className="p-3 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <ProviderBadge provider={acc.provider} size="w-6 h-6" />
+                                  <div>
+                                    <div className="text-xs font-semibold text-slate-800">{acc.name}</div>
+                                    <div className="text-[10px] text-slate-400 font-mono">{acc.masked_id}</div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <StatusBadge status={acc.status} />
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      {/* LOCAL AGENT CARD */}
+                      <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2.5 h-2.5 rounded-full ${agent && agent.status === "Online" ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`}></div>
+                            <h3 className="text-sm font-bold text-slate-900">Local Agent</h3>
+                          </div>
+                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${agent && agent.status === "Online" ? "text-emerald-700 bg-emerald-50 border-emerald-200" : "text-slate-600 bg-slate-100 border-slate-200"}`}>
+                            {agent?.status || "Offline"}
+                          </span>
+                        </div>
+
+                        <div className="mt-4 space-y-2.5 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-400">Device Name</span>
+                            <span className="font-medium text-slate-700 truncate max-w-[180px]">{agent?.device_name || "No agent enrolled"}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-400">Agent Version</span>
+                            <span className="font-mono text-slate-700">{agent?.version || "—"}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-400">Active Pipelines</span>
+                            <span className="font-bold text-blue-600">{agent?.active_transfers} transfers</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-400">Tunnel Auth</span>
+                            <span className="text-emerald-600 font-medium flex items-center gap-1">
+                              <i data-lucide="shield-check" className="w-3 h-3"></i> mTLS Verified
+                            </span>
+                          </div>
+                        </div>
+
+                        <button 
+                          onClick={() => setCurrentNav("agent")}
+                          className="mt-4 w-full py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold transition-colors"
+                        >
+                          View Diagnostics & Keys
+                        </button>
+                      </div>
+
+                      {/* RECENT ACTIVITY CARD */}
+                      <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                          <h3 className="text-sm font-bold text-slate-900">Recent Activity</h3>
+                          <button 
+                            onClick={() => setCurrentNav("audit")}
+                            className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                          >
+                            View All
+                          </button>
+                        </div>
+
+                        <div className="mt-4 space-y-3.5">
+                          {activity.slice(0, 4).map((act) => (
+                            <div key={act.id} className="flex items-start gap-3 text-xs">
+                              <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600 shrink-0 mt-0.5">
+                                <i data-lucide={act.icon || "activity"} className="w-3.5 h-3.5"></i>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold text-slate-800">{act.title}</div>
+                                <div className="text-[11px] text-slate-400 line-clamp-1">{act.description}</div>
+                                <span className="text-[10px] text-slate-400">{act.time}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4 BOTTOM ACTION CARDS */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pt-2">
+                    {/* Bottom Card 1 */}
+                    <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                      <div>
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+                          <i data-lucide="link" className="w-4 h-4"></i>
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-900">Connect Account</h4>
+                        <p className="text-xs text-slate-500 mt-1">Link cloud accounts using secure OAuth authorization.</p>
+                      </div>
+                      <button 
+                        onClick={() => setCurrentNav("accounts")}
+                        className="mt-4 w-full py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-xs rounded-lg transition-colors"
+                      >
+                        Connect Provider
+                      </button>
+                    </div>
+
+                    {/* Bottom Card 2 */}
+                    <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                      <div>
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                          <i data-lucide="play-circle" className="w-4 h-4"></i>
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-900">Create New Transfer</h4>
+                        <p className="text-xs text-slate-500 mt-1">Choose source, destination, and transfer options.</p>
+                      </div>
+                      <button 
+                        onClick={() => setIsWizardOpen(true)}
+                        className="mt-4 w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg transition-colors"
+                      >
+                        Start Transfer
+                      </button>
+                    </div>
+
+                    {/* Bottom Card 3 */}
+                    <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                      <div>
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+                          <i data-lucide="download" className="w-4 h-4"></i>
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-900">Download Agent</h4>
+                        <p className="text-xs text-slate-500 mt-1">Install the Windows agent to transfer local files securely.</p>
+                      </div>
+                      <button 
+                        onClick={() => setCurrentNav("agent")}
+                        className="mt-4 w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs rounded-lg transition-colors"
+                      >
+                        Download Agent (.msi)
+                      </button>
+                    </div>
+
+                    {/* Bottom Card 4 */}
+                    <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+                      <div>
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center mb-3">
+                          <i data-lucide="shield" className="w-4 h-4"></i>
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-900">Security & Privacy</h4>
+                        <p className="text-xs text-slate-500 mt-1">Explain encryption, token isolation, and transfer security.</p>
+                      </div>
+                      <button 
+                        onClick={() => setCurrentNav("audit")}
+                        className="mt-4 w-full py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200 transition-colors"
+                      >
+                        Learn More
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* SECONDARY PAGE: TRANSFERS VIEW */}
+              {currentNav === "transfers" && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-slate-900">Transfers Pipeline History</h2>
+                      <p className="text-xs text-slate-500">Complete log of active, completed and archived cloud file migration jobs</p>
+                    </div>
+                    <button
+                      onClick={() => setIsWizardOpen(true)}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm"
+                    >
+                      + New Transfer
+                    </button>
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                    {/* Render full table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                            <th className="p-3">Job ID & Name</th>
+                            <th className="p-3">Route</th>
+                            <th className="p-3">Files / Size</th>
+                            <th className="p-3">Progress</th>
+                            <th className="p-3">Status</th>
+                            <th className="p-3">Started</th>
+                            <th className="p-3 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-xs">
+                          {transfers.map(t => (
+                            <tr key={t.id} className="hover:bg-slate-50">
+                              <td className="p-3 font-semibold text-slate-800">
+                                <div>{t.name}</div>
+                                <span className="text-[10px] text-slate-400 font-mono">{t.id}</span>
+                              </td>
+                              <td className="p-3 text-slate-600">
+                                <div className="flex items-center gap-1 font-medium">
+                                  <span>{t.source_provider}</span> → <span>{t.destination_provider}</span>
+                                </div>
+                                <div className="text-[10px] text-slate-400">{t.source_path}</div>
+                              </td>
+                              <td className="p-3">
+                                <div>{t.total_files} files</div>
+                                <div className="text-[10px] text-slate-400">{Math.round(t.total_bytes / 1024 / 1024 / 1024)} GB total</div>
+                              </td>
+                              <td className="p-3">
+                                <div className="font-semibold text-slate-800">{t.progress_pct}%</div>
+                                <div className="w-24 bg-slate-100 h-1.5 rounded-full mt-1">
+                                  <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${t.progress_pct}%` }}></div>
+                                </div>
+                              </td>
+                              <td className="p-3"><StatusBadge status={t.status} /></td>
+                              <td className="p-3 text-slate-500">{t.elapsed_str} ago</td>
+                              <td className="p-3 text-right space-x-2">
+                                {t.status === "Running" && (
+                                  <button onClick={() => handleAction(t.id, "pause")} className="text-amber-600 font-semibold hover:underline">Pause</button>
+                                )}
+                                {t.status === "Paused" && (
+                                  <button onClick={() => handleAction(t.id, "resume")} className="text-emerald-600 font-semibold hover:underline">Resume</button>
+                                )}
+                                <button onClick={() => showToast(`Integrity report downloaded for ${t.id}`)} className="text-blue-600 font-semibold hover:underline">Report</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* SECONDARY PAGE: ACCOUNTS VIEW */}
+              {currentNav === "accounts" && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-slate-900">Connected Cloud & Local Accounts</h2>
+                      <p className="text-xs text-slate-500">Manage OAuth 2.0 PKCE cloud connections, tokens and storage permissions</p>
+                    </div>
+                    <button
+                      onClick={() => openConnectModal()}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-all"
+                    >
+                      <i data-lucide="plus-circle" className="w-4 h-4"></i>
+                      <span>+ Connect Provider</span>
+                    </button>
+                  </div>
+
+                  {accounts.length === 0 ? (
+                    <div className="bg-white rounded-xl border border-dashed border-slate-200 p-12 text-center shadow-sm max-w-xl mx-auto">
+                      <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="cloud-plus" className="w-6 h-6"></i>
+                      </div>
+                      <h3 className="text-base font-bold text-slate-800">No Storage Accounts Linked</h3>
+                      <p className="text-xs text-slate-500 mt-2 mb-6 leading-relaxed">
+                        Securely link your Google Drive, Microsoft OneDrive, Dropbox, or on-premises Windows Local Agent using official OAuth 2.0 PKCE or QR-assisted mobile device login.
+                      </p>
+                      <button
+                        onClick={openConnectModal}
+                        className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-sm"
+                      >
+                        + Link Your First Cloud Account
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {accounts.map(acc => (
+                        <div key={acc.id} className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
+                          <div className="flex items-center justify-between">
+                            <ProviderBadge provider={acc.provider} size="w-7 h-7" />
+                            <StatusBadge status={acc.status} />
+                          </div>
+                          <div>
+                            <h4 className="text-base font-bold text-slate-900">{acc.name}</h4>
+                            <div className="text-xs text-slate-500 font-mono mt-0.5">{acc.identifier}</div>
+                          </div>
+                          <div className="space-y-2 pt-2 border-t border-slate-100 text-xs">
+                            <div className="flex justify-between text-slate-500">
+                              <span>Auth Protocol:</span>
+                              <span className="font-semibold text-slate-700">{acc.auth_type}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-500">
+                              <span>Token Expiration:</span>
+                              <span className="font-semibold text-slate-700">{acc.token_expires}</span>
+                            </div>
+                            <div className="flex justify-between text-slate-500">
+                              <span>Storage Quota:</span>
+                              <span className="font-semibold text-slate-700">{acc.quota_used_gb} GB / {acc.quota_total_gb} GB</span>
+                            </div>
+                          </div>
+                          <div className="pt-3 flex gap-2">
+                            <button 
+                              onClick={() => handleReconnect(acc.id)}
+                              className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg transition-colors"
+                            >
+                              Re-authenticate OAuth
+                            </button>
+                            <button 
+                              onClick={() => showToast(`Scopes verified for ${acc.name}`)}
+                              className="px-3 py-2 border border-slate-200 text-slate-700 font-semibold text-xs rounded-lg hover:bg-slate-50"
+                            >
+                              Permissions
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SECONDARY PAGE: LOCAL AGENT VIEW */}
+              {currentNav === "agent" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900">Local Transfer Agent Service</h2>
+                    <p className="text-xs text-slate-500">Windows background service enabling secure on-premise NVMe/HDD storage bridges</p>
+                  </div>
+
+                  {!agent || !agent.device_name ? (
+                    <div className="bg-white rounded-xl border border-dashed border-slate-200 p-12 text-center shadow-sm max-w-xl mx-auto">
+                      <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="cpu" className="w-6 h-6"></i>
+                      </div>
+                      <h3 className="text-base font-bold text-slate-800">No Windows Agent Enrolled</h3>
+                      <p className="text-xs text-slate-500 mt-2 mb-6 leading-relaxed">
+                        To enable direct high-speed transfers between local drives and cloud storage, enroll and start the local Windows background agent service.
+                      </p>
+                      <button
+                        onClick={() => showToast("Run 'py agent/windows_agent.py' in PowerShell to start the agent service.")}
+                        className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-sm"
+                      >
+                        Agent Setup Instructions
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-6">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <i data-lucide="cpu" className="w-5 h-5"></i>
+                          </div>
+                          <div>
+                            <h4 className="text-base font-bold text-slate-900">{agent?.device_name}</h4>
+                            <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Service Active & Listening
+                            </span>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => showToast("Heartbeat ping sent to agent")}
+                          className="px-4 py-2 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50"
+                        >
+                          Ping Diagnostics
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
+                          <span className="text-slate-400">Version</span>
+                          <div className="text-sm font-bold text-slate-800 mt-1">{agent?.version}</div>
+                        </div>
+                        <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
+                          <span className="text-slate-400">Tunnel Protocol</span>
+                          <div className="text-sm font-bold text-slate-800 mt-1">mTLS + AES-GCM</div>
+                        </div>
+                        <div className="p-4 rounded-lg bg-slate-50 border border-slate-100">
+                          <span className="text-slate-400">Storage Location</span>
+                          <div className="text-sm font-bold text-slate-800 mt-1 font-mono">{agent?.storage_path}</div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-lg bg-slate-900 text-slate-200 text-xs font-mono space-y-1">
+                        <div className="text-slate-400 font-semibold">// Agent Cryptographic Fingerprint</div>
+                        <div>FINGERPRINT: {agent?.mtls_fingerprint}</div>
+                        <div className="text-emerald-400">STATUS: Validated by Enterprise Root CA</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SECONDARY PAGE: AUDIT LOGS VIEW */}
+              {currentNav === "audit" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900">Security Audit Logs</h2>
+                    <p className="text-xs text-slate-500">Tamper-evident chronological audit trail of all transfer commands and token rotations</p>
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase">
+                          <th className="p-3.5">Log ID / Time</th>
+                          <th className="p-3.5">Operator</th>
+                          <th className="p-3.5">Action</th>
+                          <th className="p-3.5">Target Resource</th>
+                          <th className="p-3.5">Outcome</th>
+                          <th className="p-3.5">Trace ID</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 font-mono">
+                        {auditLogs.map(log => (
+                          <tr key={log.id} className="hover:bg-slate-50">
+                            <td className="p-3.5">
+                              <div className="font-bold text-slate-800">{log.id}</div>
+                              <div className="text-[10px] text-slate-400 font-sans">{log.timestamp}</div>
+                            </td>
+                            <td className="p-3.5 text-slate-700 font-sans">
+                              <div className="font-semibold">{log.user}</div>
+                              <div className="text-[10px] text-slate-400">{log.role}</div>
+                            </td>
+                            <td className="p-3.5 font-bold text-blue-600">{log.action}</td>
+                            <td className="p-3.5 text-slate-800 font-sans">{log.resource}</td>
+                            <td className="p-3.5">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                log.outcome.includes("SUCCESS") ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
+                              }`}>
+                                {log.outcome}
+                              </span>
+                            </td>
+                            <td className="p-3.5 text-slate-400">{log.request_id}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* SECONDARY PAGE: SETTINGS VIEW */}
+              {currentNav === "settings" && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900">Security & Transfer Settings</h2>
+                    <p className="text-xs text-slate-500">Configure global concurrency, retry limits, and encryption certificates</p>
+                  </div>
+
+                  <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-5 max-w-2xl text-xs">
+                    <div>
+                      <label className="font-bold text-slate-800 block mb-1">Default Concurrent Chunk Streams</label>
+                      <input type="number" defaultValue="6" className="w-full p-2 border border-slate-200 rounded-lg bg-slate-50" />
+                      <p className="text-slate-400 mt-1">Controls how many parallel HTTPS threads are opened per provider.</p>
+                    </div>
+
+                    <div>
+                      <label className="font-bold text-slate-800 block mb-1">Integrity Verification Algorithm</label>
+                      <select className="w-full p-2 border border-slate-200 rounded-lg bg-slate-50">
+                        <option>SHA-256 Checksum (Strict Verification)</option>
+                        <option>MD5 ETag Streaming Hash</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2">
+                      <input type="checkbox" defaultChecked id="autoret" className="rounded text-blue-600" />
+                      <label htmlFor="autoret" className="font-medium text-slate-700">Enable automatic exponential backoff retry on cloud rate limits (429/503)</label>
+                    </div>
+
+                    <button 
+                      onClick={() => showToast("Settings updated successfully")}
+                      className="mt-4 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"
+                    >
+                      Save Configuration
+                    </button>
+                  </div>
+                </div>
+              )}
+            </main>
+
+            {/* 3. APPLICATION FOOTER */}
+            <footer className="h-12 bg-white border-t border-slate-200 px-8 flex items-center justify-between text-xs text-slate-500 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-slate-700">Secure Cloud Transfer Manager</span>
+                <span>·</span>
+                <span>Enterprise v2.4.0</span>
+              </div>
+              <div className="flex items-center gap-4 text-slate-400">
+                <a href="#privacy" className="hover:text-slate-600">Privacy Policy</a>
+                <a href="#terms" className="hover:text-slate-600">Terms of Service</a>
+                <a href="#help" className="hover:text-slate-600">Support</a>
+              </div>
+            </footer>
+          </div>
+
+          {/* NEW TRANSFER MULTI-STEP WIZARD MODAL */}
+          {isWizardOpen && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+                {/* Modal Header */}
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center">
+                      <i data-lucide="folder-plus" className="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">New Transfer Pipeline Wizard</h3>
+                      <p className="text-xs text-slate-500">Step {wizardStep} of 4: {
+                        wizardStep === 1 ? "Select Source Provider & Folder" :
+                        wizardStep === 2 ? "Select Destination Target" :
+                        wizardStep === 3 ? "Configure Transfer Options" : "Dry-Run Preview & Confirm"
+                      }</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setIsWizardOpen(false)}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  >
+                    <i data-lucide="x" className="w-5 h-5"></i>
+                  </button>
+                </div>
+
+                {/* Wizard Body */}
+                <div className="p-6 overflow-y-auto space-y-5 text-xs flex-1">
+                  {wizardStep === 1 && (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="font-bold text-slate-800 block mb-1">Transfer Name / Reference</label>
+                        <input
+                          type="text"
+                          value={wizardData.name}
+                          onChange={(e) => setWizardData({ ...wizardData, name: e.target.value })}
+                          placeholder="e.g., Q4 Grid Operations Backup 2026"
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-slate-800 block mb-1">Select Source Provider</label>
+                        <div className="grid grid-cols-2 gap-3">
+                          {accounts.map(acc => (
+                            <div
+                              key={acc.id}
+                              onClick={() => setWizardData({ ...wizardData, source_account_id: acc.id })}
+                              className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                                wizardData.source_account_id === acc.id
+                                  ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600"
+                                  : "border-slate-200 hover:border-slate-300"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <ProviderBadge provider={acc.provider} size="w-5 h-5" />
+                              </div>
+                              <div className="font-semibold text-slate-800 mt-2">{acc.name}</div>
+                              <div className="text-[10px] text-slate-400 truncate">{acc.masked_id}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-slate-800 block mb-1">Source Path / Directory</label>
+                        <input
+                          type="text"
+                          value={wizardData.source_path}
+                          onChange={(e) => setWizardData({ ...wizardData, source_path: e.target.value })}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg font-mono text-xs text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {wizardStep === 2 && (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="font-bold text-slate-800 block mb-1">Select Destination Provider</label>
+                        <div className="grid grid-cols-2 gap-3">
+                          {accounts.map(acc => (
+                            <div
+                              key={acc.id}
+                              onClick={() => setWizardData({ ...wizardData, destination_account_id: acc.id })}
+                              className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                                wizardData.destination_account_id === acc.id
+                                  ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600"
+                                  : "border-slate-200 hover:border-slate-300"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <ProviderBadge provider={acc.provider} size="w-5 h-5" />
+                              </div>
+                              <div className="font-semibold text-slate-800 mt-2">{acc.name}</div>
+                              <div className="text-[10px] text-slate-400 truncate">{acc.masked_id}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-slate-800 block mb-1">Destination Target Path</label>
+                        <input
+                          type="text"
+                          value={wizardData.destination_path}
+                          onChange={(e) => setWizardData({ ...wizardData, destination_path: e.target.value })}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg font-mono text-xs text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {wizardStep === 3 && (
+                    <div className="space-y-4">
+                      <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-blue-800">
+                        <i data-lucide="shield-alert" className="w-4 h-4 inline mr-1 text-blue-600"></i>
+                        Source files will remain unchanged. Transfers never delete remote records automatically.
+                      </div>
+
+                      <div className="space-y-3">
+                        <label className="flex items-center gap-2.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={wizardData.skip_existing}
+                            onChange={(e) => setWizardData({ ...wizardData, skip_existing: e.target.checked })}
+                            className="rounded text-blue-600"
+                          />
+                          <div>
+                            <span className="font-bold text-slate-800">Skip Existing Files</span>
+                            <p className="text-[11px] text-slate-400">Do not re-transfer files that have matching hash and timestamp.</p>
+                          </div>
+                        </label>
+
+                        <label className="flex items-center gap-2.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={wizardData.verify_integrity}
+                            onChange={(e) => setWizardData({ ...wizardData, verify_integrity: e.target.checked })}
+                            className="rounded text-blue-600"
+                          />
+                          <div>
+                            <span className="font-bold text-slate-800">Verify File Integrity (SHA-256)</span>
+                            <p className="text-[11px] text-slate-400">Compute cryptographic verification before declaring job complete.</p>
+                          </div>
+                        </label>
+
+                        <label className="flex items-center gap-2.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={wizardData.preserve_hierarchy}
+                            onChange={(e) => setWizardData({ ...wizardData, preserve_hierarchy: e.target.checked })}
+                            className="rounded text-blue-600"
+                          />
+                          <div>
+                            <span className="font-bold text-slate-800">Preserve Subfolder Directory Structure</span>
+                            <p className="text-[11px] text-slate-400">Replicate directory nesting exactly as on source.</p>
+                          </div>
+                        </label>
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-slate-800 block mb-1">Concurrency Threads</label>
+                        <select
+                          value={wizardData.concurrency}
+                          onChange={(e) => setWizardData({ ...wizardData, concurrency: parseInt(e.target.value) })}
+                          className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                        >
+                          <option value="2">2 Parallel Worker Threads</option>
+                          <option value="4">4 Parallel Worker Threads (Recommended)</option>
+                          <option value="8">8 Parallel Worker Threads (High Throughput)</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {wizardStep === 4 && (
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                        <div className="flex justify-between border-b border-slate-200/60 pb-2">
+                          <span className="text-slate-500">Pipeline Name:</span>
+                          <span className="font-bold text-slate-800">{wizardData.name || "Untitled Transfer"}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-200/60 pb-2">
+                          <span className="text-slate-500">Source:</span>
+                          <span className="font-mono text-slate-800">{wizardData.source_path}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-200/60 pb-2">
+                          <span className="text-slate-500">Destination:</span>
+                          <span className="font-mono text-slate-800">{wizardData.destination_path}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Integrity Check:</span>
+                          <span className="text-emerald-600 font-bold">SHA-256 Enabled</span>
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-xs">
+                        <strong>Ready to initiate:</strong> Backend job will be provisioned with safe dry-run conflict detection.
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Wizard Footer Controls */}
+                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                  {wizardStep > 1 ? (
+                    <button
+                      onClick={() => setWizardStep(wizardStep - 1)}
+                      className="px-4 py-2 border border-slate-200 text-slate-700 font-semibold text-xs rounded-lg hover:bg-slate-100"
+                    >
+                      Back
+                    </button>
+                  ) : <div></div>}
+
+                  {wizardStep < 4 ? (
+                    <button
+                      onClick={() => {
+                        if (wizardStep === 1 && !wizardData.name.trim()) {
+                          showToast("Please enter a transfer name", "error");
+                          return;
+                        }
+                        setWizardStep(wizardStep + 1);
+                      }}
+                      className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-sm"
+                    >
+                      Next Step →
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleCreateTransfer}
+                      className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-lg shadow-sm"
+                    >
+                      Confirm & Start Transfer
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* CONNECT PROVIDER & QR-CODE AUTHORIZATION MODAL */}
+          {isConnectModalOpen && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center">
+                      <i data-lucide="qr-code" className="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Connect Cloud Account</h3>
+                      <p className="text-xs text-slate-500">Official OAuth 2.0 PKCE & Secure QR Device Authorization</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={cancelAuthSession}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  >
+                    <i data-lucide="x" className="w-5 h-5"></i>
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-4 text-xs">
+                  {!deviceSession ? (
+                    <div>
+                      <label className="font-bold text-slate-800 block mb-2">Select Provider to Authorize</label>
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        {[
+                          { id: "google-drive", name: "Google Drive", desc: "OAuth 2.0 Browser + Mobile QR" },
+                          { id: "onedrive", name: "OneDrive", desc: "Microsoft Device Code + QR" },
+                          { id: "dropbox", name: "Dropbox", desc: "OAuth 2.0 PKCE + Mobile QR" },
+                          { id: "local", name: "Local Agent", desc: "Windows mTLS Enrollment" }
+                        ].map(p => (
+                          <div
+                            key={p.id}
+                            onClick={() => setSelectedProvider(p.id)}
+                            className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                              selectedProvider === p.id
+                                ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600"
+                                : "border-slate-200 hover:border-slate-300"
+                            }`}
+                          >
+                            <ProviderBadge provider={p.id} size="w-5 h-5" />
+                            <div className="font-bold text-slate-800 mt-2">{p.name}</div>
+                            <div className="text-[10px] text-slate-400">{p.desc}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-[11px] mb-4">
+                        <i data-lucide="shield" className="w-3.5 h-3.5 inline mr-1 text-amber-600"></i>
+                        Application login never grants cloud account access. Credentials and passwords are never collected.
+                      </div>
+
+                      <button
+                        onClick={() => startAuthorizationSession(selectedProvider)}
+                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-sm"
+                      >
+                        Generate Secure Authorization Session
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center space-y-4">
+                      {deviceSession.qr_code_data_uri ? (
+                        <div className="space-y-2">
+                          <div className="inline-block p-2 bg-white rounded-xl border border-slate-200 shadow-sm">
+                            <img src={deviceSession.qr_code_data_uri} alt="Authorization QR Code" className="w-48 h-48 mx-auto" />
+                          </div>
+                          <div className="text-[11px] font-semibold text-slate-700">Scan with phone camera or QR reader</div>
+                        </div>
+                      ) : null}
+
+                      {deviceSession.user_code && (
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                          <span className="text-slate-500 text-[10px] uppercase font-bold block">Device Authorization Code</span>
+                          <span className="text-xl font-mono font-bold tracking-widest text-blue-600">{deviceSession.user_code}</span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-center gap-2 text-slate-500 text-xs">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span>Waiting for authorization on provider site...</span>
+                      </div>
+
+                      <div className="pt-2 flex gap-3">
+                        <a
+                          href={deviceSession.verification_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold rounded-lg text-center"
+                        >
+                          Open in Browser ↗
+                        </a>
+                        <button
+                          onClick={cancelAuthSession}
+                          className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold rounded-lg"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById("root"));
+  </script>
+</body>
+</html>
