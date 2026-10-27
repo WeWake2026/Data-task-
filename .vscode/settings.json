@@ -1,0 +1,7 @@
+{
+  "python.defaultInterpreterPath": "C:\\Users\\Vivek\\AppData\\Local\\Programs\\Python\\Python315\\python.exe",
+  "python.analysis.extraPaths": [
+    "c:\\Users\\Vivek\\Downloads\\MSEDCL_Quality_Audit_System_Starter\\data transfer",
+    "C:\\Users\\Vivek\\AppData\\Local\\Programs\\Python\\Python315\\Lib\\site-packages"
+  ]
+}
